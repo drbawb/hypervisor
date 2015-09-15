@@ -6,7 +6,7 @@ var irc = require('irc')
 
 require('moment-duration-format');
 
-nconf.argv().env().file(__dirname + "config.json");
+nconf.argv().env().file(__dirname + "/config.json");
 
 var pkg = JSON.parse(fs.readFileSync(__dirname + "/package.json"));
 
@@ -26,8 +26,7 @@ bot.on('motd', function(motd) {
 })
 
 bot.on('notice', function(nick, to, text, message) {
-  if (nick && nick.toLowerCase() === "nickserv") {
-    console.dir(arguments);
+  if (nick && nick.toLowerCase() === "nickserv" && message.args[1].indexOf("NickServ IDENTIFY") !== -1) {
     bot.say("NickServ", "identify " + nconf.get("irc:nspassword"));
   }
 })
