@@ -61,8 +61,12 @@ bot.addListener("message#", function(from, to, text, message) {
       var rolls = parseInt(parts[0]) || 1;
       var sides = parseInt(parts[1]);
 
-      if (typeof rolls !== "number" && typeof sides !== "number") {
+      if (typeof rolls !== "number" || typeof sides !== "number") {
         return bot.say(to, "Invalid Sytax");
+      }
+
+      if (sides === -1 || rolls === -1) {
+        return bot.say(to, "Yo͞u ̢s̕h́o͢ul͜dn'͝t͜ ha̸ve͘ ͝d͝ơne̸ ţhat̀.̸")
       }
 
       if (sides === 1) {
