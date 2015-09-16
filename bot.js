@@ -2,27 +2,32 @@ var irc = require('irc')
   , moment = require('moment')
   , request = require('request')
   , fs = require('fs')
-  , nconf = require('nconf');
+  , nconf = require('nconf')
+  , lodash = require('lodash');
 
 require('moment-duration-format');
 
 nconf.argv().env().file(__dirname + "/config.json");
 
+var data = require('./data');
+
 var pkg = JSON.parse(fs.readFileSync(__dirname + "/package.json"));
+
+console.dir(nconf.get("irc:debug"))
 
 var clientOptions = {
   userName: nconf.get("irc:userName"),
   realName: nconf.get("irc:realName"),
   port: nconf.get("irc:port"),
   secure: nconf.get("irc:secure"),
-  selfSigned: nconf.get("irc:selfSigned")
+  selfSigned: nconf.get("irc:selfSigned"),
+  debug: nconf.get("irc:debug")
 };
 
-var bot = new irc.Client("irc.rizon.net", "Hypervisor", clientOptions);
+var bot = new irc.Client("irc.rizon.net", nconf.get("irc:nick"), clientOptions);
 
 bot.on('motd', function(motd) {
   bot.join("#hypervisor");
-  bot.join("#communitychastity");
 })
 
 bot.on('notice', function(nick, to, text, message) {
@@ -34,9 +39,11 @@ bot.on('notice', function(nick, to, text, message) {
 bot.addListener("message#", function(from, to, text, message) {
   var argv = message.args[1].split(" ");
   if (argv[0] === "!round") {
-    request("https://please-deny.me/rounds/ending", function(err, res, body) {
-      if (err) return bot.say(to, "Error: " + err.message)
-      var roundEnd = moment(JSON.parse(body));
+    data.round(function(round) {
+      if (!round.current_round) {
+        return bot.say(to, "No active round");
+      }
+      var roundEnd = moment(round.current_round.ends_at);
 
       var diffSeconds = moment(roundEnd).diff(moment(), "seconds");
       var tillRoundEnds = moment.duration(diffSeconds, "seconds")
@@ -81,8 +88,16 @@ bot.addListener("message#", function(from, to, text, message) {
 
       var avg = total / rolls;
 
-      bot.say(to, from + " rolls " + numbers.join(", ") + " (" + rolls + "D" + sides + ", SUM " + total + ", AVG " + avg + ")");
+      bot.say(to, from + " rolls " + numbers.join(", ") + " /" + rolls + "d" + sides + "/ sum " + total + "/ avg " + avg + "");
     }
+  } else if (argv[0] == "!stats") {
+    data.users(function(data) {
+      if (data.doms_active.length > 0) {
+        bot.say(to, data.doms_active.length + " doms / " +  data.subs_active.length + " subs / ratio " + data.round_ratio );
+      } else {
+        bot.say(to, "No active doms, are we in signup phase yet?");
+      }
+    });
   } else if (argv[0] === "!version" || argv[0] === "!v") {
     var output = pkg.name + " v" + pkg.version + " (node " + process.version + " on " + process.platform + "-" + process.arch + ")";
     bot.say(to, output);
