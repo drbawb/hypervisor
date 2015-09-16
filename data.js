@@ -58,5 +58,30 @@ module.exports = {
         cb(data);
       })
     });
+  },
+  chan: function(chan, board, cb) {
+    var key = chan + "_" + board;
+    c.get(key, function(err, data) {
+      if (err)
+        throw err;
+      if (data !== null) {
+        console.log("Serving " + chan + "_" + board + " from redis");
+        data = JSON.parse(data);
+        return cb(data);
+      }
+
+      console.log("Requesting " + chan + "_" + board + " from API");
+      var baseUri = (chan === "8ch" ? "https://8ch.co/" : "https://a.4cdn.org/");
+      request(baseUri + "/" + board + "/catalog.json", function(err, res, body) {
+        if (err) return bot.say(to, "Error: " + err.message)
+        var data = {};
+
+        data = JSON.parse(body);
+        c.set(key, JSON.stringify(data));
+        c.expire(key, 1800);
+
+        cb(data);
+      })
+    });
   }
 }

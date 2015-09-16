@@ -88,7 +88,7 @@ bot.addListener("message#", function(from, to, text, message) {
 
       var avg = total / rolls;
 
-      bot.say(to, from + " rolls " + numbers.join(", ") + " /" + rolls + "d" + sides + "/ sum " + total + "/ avg " + avg + "");
+      bot.say(to, from + " rolls " + numbers.join(", ") + " / " + rolls + "d" + sides + " / sum " + total + "/ avg " + avg);
     }
   } else if (argv[0] == "!stats") {
     data.users(function(data) {
@@ -98,6 +98,31 @@ bot.addListener("message#", function(from, to, text, message) {
         bot.say(to, "No active doms, are we in signup phase yet?");
       }
     });
+  } else if (argv[0] === "!chan") {
+    data.chan("4ch", "d", function(data) {
+      var threads = []
+      lodash.each(data, function(page) {
+        threads = threads.concat(page.threads);
+      })
+      var cthreads = lodash.filter(threads, function(t) {
+        console.log("yes");
+        var t1 = false, t2 = false;
+        if (t.sub) {
+          console.log("running sub")
+          var t1 = t.sub.toLowerCase().indexOf("chastity") !== -1;
+        }
+        if (t.com) {
+          console.log("running com")
+          var t2 = t.com.toLowerCase().indexOf("chastity") !== -1;
+        }
+        return (t1 || t2);
+      })
+      console.dir(cthreads);
+      lodash.each(cthreads, function(thread) {
+        var title = (thread.sub ? thread.sub  : ("ID " + thread.no));
+        bot.say(to, "4ch '" + title + "': https://boards.4chan.org/d/thread/" + thread.no + "/");
+      })
+    })
   } else if (argv[0] === "!version" || argv[0] === "!v") {
     var output = pkg.name + " v" + pkg.version + " (node " + process.version + " on " + process.platform + "-" + process.arch + ")";
     bot.say(to, output);
