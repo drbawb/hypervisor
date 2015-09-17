@@ -127,6 +127,12 @@ bot.addListener("message#", function(from, to, text, message) {
         bot.say(to, "4ch '" + title + "': https://boards.4chan.org/d/thread/" + thread.no + "/");
       })
     })
+  } else if (argv[0] === "!soup") {
+    // target user is remainder of string (if applicable.)
+    var target = from;
+    if (argv[1] && argv[1].length > 0) { target = argv.slice(1).join(" "); }
+
+    bot.action(to, "gives " + target + " a warm bowl of soup.");
   } else if (argv[0] === "!version" || argv[0] === "!v") {
     var output = pkg.name + " v" + pkg.version + " (node " + process.version + " on " + process.platform + "-" + process.arch + ")";
     bot.say(to, output);
